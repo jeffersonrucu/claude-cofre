@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# cofre-ssh <entrada> ["<comando>"]
+set -euo pipefail
+[[ $# -ge 1 ]] || { echo "uso: cofre-ssh <entrada> [cmd]" >&2; exit 2; }
+entrada="$1"; shift
+
+attr() {
+  # atributos saem no stderr; o stdout traz o segredo
+  secret-tool search Title "$entrada" 2>&1 >/dev/null \
+    | sed -n "s/^attribute\.$1 = //p" | head -n1 || true
+}
+url=$(attr URL)
+user=$(attr UserName)
+if [[ -z "$url" ]]; then
+  echo "cofre-ssh: '$entrada' não existe ou cofre travado" >&2
+  exit 1
+fi
+
+# aceita host, host:porta ou ssh://host:porta
+host=${url#*://}; host=${host%%/*}; port=22
+if [[ "$host" == *:* ]]; then port=${host##*:}; host=${host%:*}; fi
+
+opts=(-p "$port" -o StrictHostKeyChecking=accept-new)
+senha=$(secret-tool lookup Title "$entrada" 2>/dev/null || true)
+
+# sem senha: chave SSH, o agent do KeePassXC assina
+if [[ -z "$senha" ]]; then
+  exec ssh "${opts[@]}" "$user@$host" "$@"
+fi
+
+# com senha: vai pelo ambiente, nunca no argumento
+export SSHPASS="$senha"; unset senha
+opts+=(-o PreferredAuthentications=password,keyboard-interactive)
+exec sshpass -e ssh "${opts[@]}" "$user@$host" "$@"

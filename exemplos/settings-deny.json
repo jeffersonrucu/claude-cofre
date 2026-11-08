@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/*.kdbx)",
+      "Read(~/cofre/**)",
+      "Read(~/.ssh/**)",
+      "Read(**/.env*)",
+      "Read(~/.aws/credentials)",
+      "Bash(secret-tool *)",
+      "Bash(keepassxc-cli *)",
+      "Bash(printenv *)",
+      "Bash(cofre-aws *)",
+      "Bash(aws configure export-credentials *)"
+    ]
+  }
+}

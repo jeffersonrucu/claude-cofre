@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# cofre-lista: título e URL de cada entrada, nenhum segredo
+set -euo pipefail
+svc=org.freedesktop.secrets
+root=/org/freedesktop/secrets
+iface=org.freedesktop.Secret
+prop() { busctl --user --json=short get-property "$svc" "$@" 2>/dev/null; }
+locked() { prop "$1" "$iface.Collection" Locked | jq -r .data; }
+# URL sem usuário, senha e query: mysql://root:x@db/a?k=v -> mysql://db/a
+filtro='.data | [.Title // "",
+  (.URL // "" | sub("[?#].*$"; "")
+              | sub("^(?<s>[^:/]+://)?[^/]*@"; "\(.s // "")"))] | @tsv'
+
+cols=$(prop "$root" "$iface.Service" Collections | jq -r '.data[]') \
+  || { echo "cofre-lista: KeePassXC fechado" >&2; exit 1; }
+[[ -n "$cols" ]] || { echo "cofre-lista: nada exposto" >&2; exit 1; }
+
+for c in $cols; do
+  if [[ $(locked "$c") == true ]]; then
+    echo "cofre-lista: cofre travado" >&2; continue
+  fi
+  for i in $(prop "$c" "$iface.Collection" Items | jq -r '.data[]'); do
+    prop "$i" "$iface.Item" Attributes \
+      | jq -r "$filtro"
+  done
+done | sort

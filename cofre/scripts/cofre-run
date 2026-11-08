@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# cofre-run <entrada> <comando...>
+# ex.: cofre-run banco sh -c 'mysql -u"$COFRE_USER" -p"$COFRE_PASS"'
+set -euo pipefail
+[[ $# -ge 2 ]] || { echo "uso: cofre-run <entrada> <cmd...>" >&2; exit 2; }
+entrada="$1"; shift
+attr() {
+  # atributos saem no stderr; o stdout traz o segredo
+  secret-tool search Title "$entrada" 2>&1 >/dev/null \
+    | sed -n "s/^attribute\.$1 = //p" | head -n1 || true
+}
+user=$(attr UserName); url=$(attr URL)
+senha=$(secret-tool lookup Title "$entrada" 2>/dev/null || true)
+[[ -n "$senha" ]] || { echo "cofre-run: cofre travado?" >&2; exit 1; }
+
+# as variáveis só existem no ambiente desse comando
+COFRE_USER="$user" COFRE_URL="$url" COFRE_PASS="$senha" exec "$@"
