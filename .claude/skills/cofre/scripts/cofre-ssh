@@ -3,6 +3,7 @@
 set -euo pipefail
 [[ $# -ge 1 ]] || { echo "uso: cofre-ssh <entrada> [cmd]" >&2; exit 2; }
 entrada="$1"; shift
+"$(dirname "$(readlink -f "$0")")/cofre-abrir"
 
 attr() {
   # atributos saem no stderr; o stdout traz o segredo

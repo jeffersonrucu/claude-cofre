@@ -11,8 +11,9 @@ filtro='.data | [.Title // "",
   (.URL // "" | sub("[?#].*$"; "")
               | sub("^(?<s>[^:/]+://)?[^/]*@"; "\(.s // "")"))] | @tsv'
 
+"$(dirname "$(readlink -f "$0")")/cofre-abrir"
 cols=$(prop "$root" "$iface.Service" Collections | jq -r '.data[]') \
-  || { echo "cofre-lista: KeePassXC fechado" >&2; exit 1; }
+  || { echo "cofre-lista: Serviço Secreto não respondeu" >&2; exit 1; }
 [[ -n "$cols" ]] || { echo "cofre-lista: nada exposto" >&2; exit 1; }
 
 for c in $cols; do

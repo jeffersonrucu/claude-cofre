@@ -5,7 +5,7 @@ Pop!_OS 24.04, COSMIC, KeePassXC 2.7.6.
 | Peça | Onde |
 |---|---|
 | Cofre | `~/cofre/*.kdbx`, banco `agent`. O grupo exposto é o que aparece no `cofre-lista` |
-| Scripts | `~/.local/bin/cofre-lista`, `cofre-ssh` e `cofre-run`. Cópias em `scripts/` desta skill. O `cofre-lista` precisa de `jq` |
+| Scripts | `~/.local/bin/cofre-abrir`, `cofre-lista`, `cofre-ssh` e `cofre-run`. Fonte em `scripts/` desta skill (edite lá e copie pro `~/.local/bin`). `cofre-lista` e `cofre-abrir` precisam de `jq` |
 | Secret Service | KeePassXC. O gnome-keyring roda só com `pkcs11` |
 | Override do keyring | `~/.config/systemd/user/gnome-keyring-daemon.service.d/override.conf` |
 | Ativação D-Bus | `~/.local/share/dbus-1/services/org.freedesktop.secrets.service`, apontando pra `/usr/bin/keepassxc` |
@@ -26,7 +26,9 @@ Pop!_OS 24.04, COSMIC, KeePassXC 2.7.6.
 |---|---|---|
 | `cofre-lista: nada exposto` | Nenhum grupo exposto | *Banco de dados › Configurações do banco de dados › Integração com o Serviço Secreto*: escolher o grupo |
 | `cofre travado` ou `não existe ou cofre travado` | KeePassXC travado | O usuário destrava. É o interruptor funcionando |
-| `cofre-lista: KeePassXC fechado` | App fechado ou outro dono do Secret Service | Abrir o KeePassXC; `busctl --user status org.freedesktop.secrets \| grep Comm` |
+| `cofre-abrir: ... Integração com o Serviço Secreto está desligada` | `[FdoSecrets] Enabled=false` no `keepassxc.ini` | *Ferramentas › Configurações › Integração com o Serviço Secreto*. Não edite o `.ini` com o app aberto: ele sobrescreve ao sair |
+| `cofre-abrir: o KeePassXC não registrou o Serviço Secreto` | Outro dono do nome | `busctl --user status org.freedesktop.secrets \| grep Comm` |
+| Algo trava ~25s e dá `Connection timed out` | Chamada direta ao `org.freedesktop.secrets` sem dono: a ativação D-Bus roda `keepassxc`, que só foca a instância aberta | Sempre checar com `NameHasOwner` antes (o `cofre-abrir` faz isso) |
 | Entrada não aparece | Fora do grupo exposto | Mover a entrada |
 | `cofre-ssh` sai com código 5 ou "Permission denied" | Senha do cofre diferente da do servidor | O usuário gera senha nova e troca no servidor |
 | KeePassXC avisa que outro serviço secreto está rodando | gnome-keyring com `secrets` | Conferir o PAM; `systemctl --user restart gnome-keyring-daemon` libera o nome na hora |

@@ -4,6 +4,7 @@
 set -euo pipefail
 [[ $# -ge 2 ]] || { echo "uso: cofre-run <entrada> <cmd...>" >&2; exit 2; }
 entrada="$1"; shift
+"$(dirname "$(readlink -f "$0")")/cofre-abrir"
 attr() {
   # atributos saem no stderr; o stdout traz o segredo
   secret-tool search Title "$entrada" 2>&1 >/dev/null \

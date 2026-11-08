@@ -22,10 +22,11 @@ você: "roda o wp plugin list no stage da loja"
 
 Você não precisa dizer o nome da entrada. O Claude cruza o pedido ("o stage da loja", "o banco de teste do cliente X") com o título e a URL das entradas. Se duas baterem, tipo `-stage` e `-prod`, ele pergunta. Produção por dedução, nunca.
 
-São três scripts:
+São quatro scripts:
 
 | Script | O que faz |
 |---|---|
+| `cofre-abrir` | Abre o KeePassXC se estiver fechado, traz a janela pra frente se estiver travado e espera você digitar a senha mestra (até 120s, ajustável por `COFRE_ESPERA`). Os outros três chamam ele sozinhos |
 | `cofre-lista` | Lista `título<TAB>URL` das entradas expostas. Não busca senha e tira usuário, senha e query string de dentro da URL |
 | `cofre-ssh <entrada> "<comando>"` | Roda um comando remoto por SSH, com senha (via `sshpass -e`) ou com chave (via agente SSH do KeePassXC) |
 | `cofre-run <entrada> <comando...>` | Roda o comando com `COFRE_USER`, `COFRE_PASS` e `COFRE_URL` no ambiente dele, e só dele |
@@ -45,7 +46,7 @@ Com aspas duplas a variável expande na shell do Claude, onde está vazia, e o c
 ```
 .claude/skills/cofre/
 ├── SKILL.md                 regras e fluxo que o Claude segue
-├── scripts/                 cofre-lista, cofre-ssh, cofre-run
+├── scripts/                 cofre-abrir, cofre-lista, cofre-ssh, cofre-run
 └── references/
     ├── ferramentas.md       como cada tipo de ferramenta lê a credencial e onde ela costuma vazar
     ├── cadastro.md          como nomear e preencher uma entrada; TOTP e senha mestra

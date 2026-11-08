@@ -41,6 +41,7 @@ Não leia `.env` nem config com segredo pra descobrir a URL.
 
 | Script | Uso |
 |---|---|
+| `cofre-abrir` | Abre o KeePassXC se estiver fechado e espera o usuário destravar. Os outros três já chamam sozinhos |
 | `cofre-lista` | Título e URL das entradas expostas |
 | `cofre-ssh <entrada> "<comando>"` | Comando remoto por SSH, com senha ou chave |
 | `cofre-run <entrada> <comando...>` | Roda o comando com `COFRE_USER`, `COFRE_PASS` e `COFRE_URL` só no ambiente dele |
@@ -52,6 +53,8 @@ cofre-run clientex-db sh -c 'PGPASSWORD="$COFRE_PASS" psql -U "$COFRE_USER" -c "
 ```
 
 Antes de rodar, confira se a ferramenta grava ou imprime a credencial (trace, log verboso, mensagem de erro, arquivo de sessão): [references/ferramentas.md](references/ferramentas.md).
+
+Com o KeePassXC fechado ou travado, os scripts abrem a janela e esperam até 120s (`COFRE_ESPERA`) o usuário digitar a senha mestra. Avise o usuário antes de rodar e use `timeout` de 180000 no Bash. Se a saída disser que a Integração com o Serviço Secreto está desligada, repasse o caminho do menu: o script não liga isso sozinho.
 
 Se o usuário ligou a confirmação do KeePassXC, cada `cofre-ssh` ou `cofre-run` abre janelas pedindo aprovação. Avise antes de rodar.
 

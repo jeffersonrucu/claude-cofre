@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# cofre-abrir: garante KeePassXC aberto, Serviço Secreto ligado e cofre destravado
+# Não lê nem imprime segredo: só nomes no D-Bus e a propriedade Locked.
+# COFRE_ESPERA = segundos esperando o usuário destravar (padrão 120)
+set -euo pipefail
+espera=${COFRE_ESPERA:-120}
+svc=org.freedesktop.secrets
+root=/org/freedesktop/secrets
+iface=org.freedesktop.Secret
+ini="${XDG_CONFIG_HOME:-$HOME/.config}/keepassxc/keepassxc.ini"
+
+rodando() { pgrep -x keepassxc >/dev/null; }
+# NameHasOwner não dispara a ativação D-Bus (get-property dispara e trava 25s)
+dono() {
+  busctl --user call org.freedesktop.DBus /org/freedesktop/DBus \
+    org.freedesktop.DBus NameHasOwner s "$svc" 2>/dev/null | grep -q true
+}
+integracao_off() {
+  awk '/^\[/{s=($0=="[FdoSecrets]")} s && /^Enabled=false/{f=1} END{exit !f}' "$ini" 2>/dev/null
+}
+prop() { busctl --user --json=short get-property "$svc" "$@" 2>/dev/null; }
+destravado() {
+  local c
+  for c in $(prop "$root" "$iface.Service" Collections | jq -r '.data[]'); do
+    [[ $(prop "$c" "$iface.Collection" Locked | jq -r .data) == false ]] && return 0
+  done
+  return 1
+}
+off() {
+  cat >&2 <<'EOF'
+cofre-abrir: KeePassXC aberto, mas a Integração com o Serviço Secreto está desligada.
+  Ligue em Ferramentas › Configurações › Integração com o Serviço Secreto
+  e confira o grupo exposto em Banco de dados › Configurações do banco de dados.
+EOF
+  exit 1
+}
+
+if ! rodando; then
+  echo "cofre-abrir: abrindo o KeePassXC, digite a senha mestra na janela" >&2
+  setsid -f keepassxc >/dev/null 2>&1
+fi
+
+avisou=0
+for ((t = 0; t < espera; t++)); do
+  if dono; then
+    destravado && exit 0
+    if ((avisou == 0)); then
+      echo "cofre-abrir: cofre travado, destrave na janela do KeePassXC (espero ${espera}s)" >&2
+      setsid -f keepassxc >/dev/null 2>&1 # traz a janela pra frente
+      avisou=1
+    fi
+  elif rodando && ((t >= 5)) && integracao_off; then
+    off
+  fi
+  sleep 1
+done
+
+if ! rodando; then
+  echo "cofre-abrir: o KeePassXC não abriu" >&2
+elif ! dono; then
+  integracao_off && off
+  echo "cofre-abrir: o KeePassXC não registrou o Serviço Secreto (outro dono? veja montagem.md)" >&2
+else
+  echo "cofre-abrir: cofre continua travado após ${espera}s" >&2
+fi
+exit 1
