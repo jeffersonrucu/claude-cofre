@@ -43,7 +43,7 @@ Com aspas duplas a variável expande na shell do Claude, onde está vazia, e o c
 ## O que vem no repositório
 
 ```
-cofre/
+.claude/skills/cofre/
 ├── SKILL.md                 regras e fluxo que o Claude segue
 ├── scripts/                 cofre-lista, cofre-ssh, cofre-run
 └── references/
@@ -70,15 +70,15 @@ No macOS e no Windows não existe Secret Service, então os scripts não funcion
 1. Copie a skill e os scripts:
 
    ```bash
-   git clone https://github.com/joliveira-sv/cofre-skill.git
-   cp -r cofre-skill/cofre ~/.claude/skills/
-   install -m 755 cofre-skill/cofre/scripts/cofre-* ~/.local/bin/
+   git clone https://github.com/jeffersonrucu/claude-cofre.git
+   cp -r claude-cofre/.claude/skills/cofre ~/.claude/skills/
+   install -m 755 claude-cofre/.claude/skills/cofre/scripts/cofre-* ~/.local/bin/
    sudo apt install libsecret-tools jq sshpass
    ```
 
 2. No KeePassXC, crie um banco só pro agente (ou um grupo separado no seu) e ligue o Serviço Secreto: *Ferramentas › Configurações › Integração com o Serviço Secreto*. Depois, em *Banco de dados › Configurações do banco de dados › Integração com o Serviço Secreto*, escolha o grupo que vai ficar exposto. Só o que estiver nesse grupo aparece pro `cofre-lista`.
 
-3. Se o gnome-keyring estiver rodando, ele disputa o nome `org.freedesktop.secrets` com o KeePassXC e normalmente ganha. O [montagem.md](cofre/references/montagem.md) mostra como deixei ele só com `pkcs11` e como desfazer. Essa é a parte chata da instalação. Vá com calma e guarde o backup do PAM antes de mexer.
+3. Se o gnome-keyring estiver rodando, ele disputa o nome `org.freedesktop.secrets` com o KeePassXC e normalmente ganha. O [montagem.md](.claude/skills/cofre/references/montagem.md) mostra como deixei ele só com `pkcs11` e como desfazer. Essa é a parte chata da instalação. Vá com calma e guarde o backup do PAM antes de mexer.
 
 4. Junte as regras de [exemplos/settings-deny.json](exemplos/settings-deny.json) ao `permissions.deny` do seu `~/.claude/settings.json`. Elas impedem o Claude de rodar `secret-tool` e `keepassxc-cli` direto, ou de ler `.kdbx`, `~/.ssh`, `.env*` e `~/.aws/credentials`.
 
@@ -97,7 +97,7 @@ Preencha a URL sempre, porque é por ela que o Claude escolhe a entrada. Pra ser
 
 Servidor com chave SSH fica com a senha em branco e a chave anexada na entrada, com o agente SSH do KeePassXC carregando ela quando o cofre destrava.
 
-TOTP não vai no grupo exposto. Senha e segundo fator no mesmo lugar que o agente acessa é um fator só. Detalhes em [cadastro.md](cofre/references/cadastro.md).
+TOTP não vai no grupo exposto. Senha e segundo fator no mesmo lugar que o agente acessa é um fator só. Detalhes em [cadastro.md](.claude/skills/cofre/references/cadastro.md).
 
 ## Limites
 
@@ -106,10 +106,10 @@ Isso é boa prática, não blindagem, e prefiro deixar claro:
 - Com o cofre destravado, qualquer processo do seu usuário consegue pedir senha pelo D-Bus. A regra de deny barra o comando que ela nomeia (`secret-tool`), não um `python` que faça a mesma chamada. A skill manda o Claude não contornar, mas isso é instrução, não trava.
 - A trava de verdade é a confirmação de acesso do KeePassXC. Ligada, cada `cofre-ssh` ou `cofre-run` abre uma janela pedindo sua aprovação. É mais lento, e é o único ponto que o agente não consegue pular sozinho.
 - Travar o KeePassXC corta tudo na hora. Os scripts respondem "cofre travado" e param.
-- Se a ferramenta chamada imprimir a senha (`curl -v`, trace do Playwright, mensagem de erro com a URL completa), ela volta pra conversa. O [ferramentas.md](cofre/references/ferramentas.md) lista os casos que conheço, mas a lista não é completa.
+- Se a ferramenta chamada imprimir a senha (`curl -v`, trace do Playwright, mensagem de erro com a URL completa), ela volta pra conversa. O [ferramentas.md](.claude/skills/cofre/references/ferramentas.md) lista os casos que conheço, mas a lista não é completa.
 
-Se uma senha vazar mesmo assim, o [vazamento.md](cofre/references/vazamento.md) tem o passo a passo: trocar primeiro, procurar as cópias depois.
+Se uma senha vazar mesmo assim, o [vazamento.md](.claude/skills/cofre/references/vazamento.md) tem o passo a passo: trocar primeiro, procurar as cópias depois.
 
 ## Como desfazer
 
-Apague `~/.claude/skills/cofre` e `~/.local/bin/cofre-*`, tire as regras de deny e, se mexeu no gnome-keyring, siga a seção "Reverter tudo" do [montagem.md](cofre/references/montagem.md).
+Apague `~/.claude/skills/cofre` e `~/.local/bin/cofre-*`, tire as regras de deny e, se mexeu no gnome-keyring, siga a seção "Reverter tudo" do [montagem.md](.claude/skills/cofre/references/montagem.md).
